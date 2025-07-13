@@ -62,36 +62,55 @@ def get_crypto_price(symbol: str, market: str = "USD") -> dict:
 
 
 
-def get_stock_price(symbol: str) -> dict:
+def get_stock_price(symbol: str, market: str = "USD") -> dict:
     """
-    Fetches the latest quote for a stock symbol.
+    Fetches the latest quote for a stock symbol using Alpha Vantage.
 
     Args:
         symbol (str): The stock symbol to look up (e.g., 'AAPL', 'GOOGL').
+        market (str): Optional market currency (default: 'USD').
+                      Currently unused — prices are fetched in listing market's currency.
 
     Returns:
-        dict: A dictionary containing:
-            - symbol (str): The stock symbol in uppercase.
-            - price (str): The latest trading price.
-            - volume (str): The latest trading volume.
-            - change_percent (str): The percentage change.
-            - timestamp (str): The latest trading date.
+        dict: A dictionary with:
+            - symbol (str): The stock symbol
+            - open (str): Opening price
+            - high (str): Highest price of the day
+            - low (str): Lowest price of the day
+            - price (str): Current trading price
+            - volume (str): Trading volume
+            - change_percent (str): % change for the day
+            - timestamp (str): Last trading date
 
-        If an error occurs or data is invalid, prints error and returns None.
+        Returns None if data is invalid or an error occurs.
     """
     try:
         data, _ = stock_api.get_quote_endpoint(symbol=symbol.upper())
-        if "05. price" not in data:
-            print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Invalid or empty data for {symbol.upper()}')
+
+        required_keys = [
+            "01. symbol", "02. open", "03. high", "04. low",
+            "05. price", "06. volume", "07. latest trading day", "10. change percent"
+        ]
+
+        if not all(key in data for key in required_keys):
+            print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Invalid or incomplete data for {symbol.upper()}{Colors.RESET}')
             return None
 
         return {
-            "symbol": symbol.upper(),
+            "symbol": data["01. symbol"],
+            "open": data["02. open"],
+            "high": data["03. high"],
+            "low": data["04. low"],
             "price": data["05. price"],
             "volume": data["06. volume"],
-            "change_percent": data["10. change percent"],
-            "timestamp": data["07. latest trading day"]
+            "timestamp": data["07. latest trading day"],
+            "change_percent": data["10. change percent"]
         }
+
+    except Exception as e:
+        print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Failed to fetch stock price for {symbol.upper()}: {e}{Colors.RESET}')
+        return None
+
 
     except Exception as e:
         print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] {e}')
