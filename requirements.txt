@@ -1,0 +1,4 @@
+discord.py==2.4.0
+pyaml==24.12.1
+alpha-vantage
+mysql-connector-python
