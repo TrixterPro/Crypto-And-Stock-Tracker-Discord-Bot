@@ -30,9 +30,10 @@ class Stock(commands.GroupCog, name='stock'):
         volume = Formatting.format_with_commas(stock_details.get("volume"))
         change_percent = stock_details.get("change_percent")
         timestamp = stock_details.get("timestamp")
-
+        name = stock_details.get("name")
+        
         embed = discord.Embed(
-            title=f"📈 {symbol} Market Summary",
+            title=f"📈 {name} ({symbol}) Market Summary",
             description=f"💱 Showing values in **{market}**\n📊 **Change:** `{change_percent}`",
             color=discord.Color.blurple()
         )
@@ -69,9 +70,12 @@ class Stock(commands.GroupCog, name='stock'):
                 f"❌ Could not retrieve data for `{symbol1}` or `{symbol2}`.",
                 ephemeral=True
             )
+        
+        name1 = data1.get("name")
+        name2 = data2.get("name")
 
         embed = discord.Embed(
-            title=f"📊 {symbol1} vs {symbol2}",
+            title=f"📊 {name1} ({symbol1}) vs {name2} ({symbol2})",
             description=f"Currency: **{market}**",
             color=discord.Color.dark_gold()
         )

@@ -3,8 +3,14 @@ from alpha_vantage.timeseries import TimeSeries
 import os
 from utils.config import basicconfig
 from utils.Colors import Colors
+from alpha_vantage.timeseries import TimeSeries
+from alpha_vantage.fundamentaldata import FundamentalData
 
 API_KEY = basicconfig.ALPHA_VANTAGE_API_KEY
+
+ts = TimeSeries(key=API_KEY, output_format="json")
+fd = FundamentalData(key=API_KEY, output_format="json")
+
 
 crypto_api = CryptoCurrencies(key=API_KEY, output_format='json')
 stock_api = TimeSeries(key=API_KEY, output_format='json')
@@ -85,19 +91,16 @@ def get_stock_price(symbol: str, market: str = "USD") -> dict:
         Returns None if data is invalid or an error occurs.
     """
     try:
-        data, _ = stock_api.get_quote_endpoint(symbol=symbol.upper())
+        data, _ = ts.get_quote_endpoint(symbol=symbol.upper())
+        overview, _ = fd.get_company_overview(symbol=symbol.upper())  # <- use FundamentalData here
 
-        required_keys = [
-            "01. symbol", "02. open", "03. high", "04. low",
-            "05. price", "06. volume", "07. latest trading day", "10. change percent"
-        ]
-
-        if not all(key in data for key in required_keys):
-            print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Invalid or incomplete data for {symbol.upper()}{Colors.RESET}')
+        if "05. price" not in data:
+            print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Invalid or empty data for {symbol.upper()}{Colors.RESET}')
             return None
 
         return {
-            "symbol": data["01. symbol"],
+            "symbol": symbol.upper(),
+            "name": overview.get("Name", symbol.upper()),  # fallback to symbol if no name
             "open": data["02. open"],
             "high": data["03. high"],
             "low": data["04. low"],
@@ -108,10 +111,6 @@ def get_stock_price(symbol: str, market: str = "USD") -> dict:
         }
 
     except Exception as e:
-        print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Failed to fetch stock price for {symbol.upper()}: {e}{Colors.RESET}')
+        print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] Failed to fetch stock data for {symbol.upper()}: {e}{Colors.RESET}')
         return None
 
-
-    except Exception as e:
-        print(f'{Colors.BOLD}[{Colors.BRIGHT_RED}ERROR{Colors.RESET}{Colors.BOLD}] {e}')
-        return None
